@@ -1,8 +1,5 @@
-import DebateArena from '@/components/BasicGraph'
-import React from 'react'
+import DebateArena from "@/components/BasicGraph";
 
 export default function TesPage() {
-  return (
-    <DebateArena />
-  )
+  return <DebateArena />;
 }
