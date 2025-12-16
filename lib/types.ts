@@ -1,6 +1,6 @@
-export type ArgumentType = 'claim' | 'evidence' | 'counter' | 'question';
+export type ArgumentType = "claim" | "evidence" | "counter" | "question";
 
-export type RelationType = 'supports' | 'refutes' | 'questions' | 'assumes';
+export type RelationType = "supports" | "refutes" | "questions" | "assumes";
 
 export interface ArgumentData {
   id: string;
@@ -23,6 +23,6 @@ export interface ArgumentRelation {
 export interface DebateState {
   arguments: Record<string, ArgumentData>;
   relations: Record<string, ArgumentRelation>;
-  addArgument: (arg: Omit<ArgumentData, 'id' | 'createdAt'>) => void;
-  addRelation: (rel: Omit<ArgumentRelation, 'id'>) => void;
+  addArgument: (arg: Omit<ArgumentData, "id" | "createdAt">) => void;
+  addRelation: (rel: Omit<ArgumentRelation, "id">) => void;
 }
