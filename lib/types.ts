@@ -1,6 +1,6 @@
-export type ArgumentType = 'claim' | 'evidence' | 'counter' | 'question';
+export type ArgumentType = "claim" | "evidence" | "counter" | "question";
 
-export type RelationType = 'supports' | 'refutes' | 'questions' | 'assumes';
+export type RelationType = "supports" | "refutes" | "questions" | "assumes";
 
 export interface ArgumentData {
   id: string;
@@ -32,4 +32,5 @@ export interface DebateState {
   addRelation: (source: string, target: string, type: RelationType) => void;
   updateArgument: (id: string, updates: Partial<ArgumentData>) => void;
   deleteArgument: (id: string) => void;
+  analyzeArgument: (id: string) => Promise<void>;
 }
