@@ -33,8 +33,8 @@ export default function DebateArena() {
   const nodes = useMemo(() => {
     return Object.values(storeArgs).map((arg, index) => ({
       id: arg.id,
-      type: 'argument',
-      position: { x: 250 + (index * 350), y: 100 + (index % 2) * 200 },
+      type: "argument",
+      position: { x: 250 + index * 350, y: 100 + (index % 2) * 200 },
       data: {
         type: arg.type,
         content: arg.content,
@@ -198,6 +198,14 @@ export default function DebateArena() {
               Ctrl+Enter: Save edit or add argument
               <br />
               Esc: Cancel edit
+            </p>
+          </div>
+          <div className="mt-3 pt-3 border-t border-gray-600">
+            <p className="text-xs text-purple-300 italic">
+              <strong>🤖 AI Analysis:</strong>
+              <br />
+              Claude analyzes arguments for logical fallacies and provides a
+              strength score (0-100).
             </p>
           </div>
         </div>
