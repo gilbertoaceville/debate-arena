@@ -9,6 +9,12 @@ interface ArgumentNodeProps {
     type: ArgumentType;
     content: string;
     votes: number;
+    aiAnalysis?: {
+      strength: number;
+      fallacies: string[];
+      feedback: string;
+    };
+    isAnalyzing?: boolean;
   };
 }
 
@@ -36,11 +42,12 @@ const typeConfig = {
 };
 
 export function ArgumentNode({ id, data }: ArgumentNodeProps) {
-  const { updateArgument, deleteArgument } = useDebateStore();
+    const { updateArgument, deleteArgument, analyzeArgument } = useDebateStore();
   const config = typeConfig[data.type];
 
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -76,6 +83,16 @@ export function ArgumentNode({ id, data }: ArgumentNodeProps) {
     } else if (e.key === "Escape") {
       handleCancel();
     }
+  };
+
+  const handleAnalyze = () => {
+    analyzeArgument(id);
+  };
+
+  const getStrengthColor = (strength: number) => {
+    if (strength >= 75) return "text-green-400";
+    if (strength >= 50) return "text-yellow-400";
+    return "text-red-400";
   };
 
   return (
@@ -142,28 +159,87 @@ export function ArgumentNode({ id, data }: ArgumentNodeProps) {
             </div>
           </div>
         ) : (
-          <div
-            className="text-sm mb-3 leading-relaxed cursor-pointer hover:bg-white/5 rounded p-1 -m-1 transition-colors"
-            onClick={startEditing}
-            title="Click to edit"
-          >
-            {data.content}
+          <div>
+            <div
+              className="text-sm mb-3 leading-relaxed cursor-pointer hover:bg-white/5 rounded p-1 -m-1 transition-colors"
+              onClick={startEditing}
+              title="Click to edit"
+            >
+              {data.content}
+            </div>
+
+            {data.aiAnalysis && (
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div
+                    className={`text-xs font-bold ${getStrengthColor(
+                      data.aiAnalysis.strength
+                    )}`}
+                  >
+                    Strength: {data.aiAnalysis.strength}/100
+                  </div>
+                  {data.aiAnalysis.fallacies.length > 0 && (
+                    <div className="flex gap-1 flex-wrap">
+                      {data.aiAnalysis.fallacies.map((fallacy, i) => (
+                        <span
+                          key={i}
+                          className="bg-red-500/20 text-red-300 px-2 py-0.5 rounded text-xs"
+                        >
+                          ⚠️ {fallacy}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {showAnalysis && (
+                  <div className="bg-white/10 rounded p-2 text-xs">
+                    {data.aiAnalysis.feedback}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowAnalysis(!showAnalysis)}
+                  className="text-xs text-white/60 hover:text-white transition-colors"
+                >
+                  {showAnalysis ? "▼ Hide" : "▶ Show"} Analysis
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleVote(1)}
+              className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
+            >
+              👍
+            </button>
+            <span className="text-sm font-bold">{data.votes}</span>
+            <button
+              onClick={() => handleVote(-1)}
+              className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
+            >
+              👎
+            </button>
+          </div>
+
           <button
-            onClick={() => handleVote(1)}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
+            onClick={handleAnalyze}
+            disabled={data.isAnalyzing}
+            className="w-full bg-purple-600/30 hover:bg-purple-600/50 disabled:bg-gray-600/30 rounded px-3 py-1.5 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
           >
-            👍
-          </button>
-          <span className="text-sm font-bold">{data.votes}</span>
-          <button
-            onClick={() => handleVote(-1)}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
-          >
-            👎
+            {data.isAnalyzing ? (
+              <>
+                <span className="animate-spin">⚡</span>
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <span>🤖</span>
+                {data.aiAnalysis ? "Re-analyze" : "Analyze with AI"}
+              </>
+            )}
           </button>
         </div>
       </div>
