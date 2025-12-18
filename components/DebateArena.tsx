@@ -17,8 +17,6 @@ const nodeTypes = {
   argument: ArgumentNode,
 };
 
-
-
 export default function DebateArena() {
   const {
     arguments: storeArgs,
@@ -35,12 +33,14 @@ export default function DebateArena() {
   const nodes = useMemo(() => {
     return Object.values(storeArgs).map((arg, index) => ({
       id: arg.id,
-      type: "argument",
-      position: { x: 250 + index * 350, y: 100 + (index % 2) * 200 },
+      type: 'argument',
+      position: { x: 250 + (index * 350), y: 100 + (index % 2) * 200 },
       data: {
         type: arg.type,
         content: arg.content,
         votes: arg.votes,
+        aiAnalysis: arg.aiAnalysis,
+        isAnalyzing: arg.isAnalyzing,
       },
     }));
   }, [storeArgs]);
@@ -97,10 +97,31 @@ export default function DebateArena() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      handleAddArgument();
+    }
+  };
+
   return (
     <div className="w-full h-screen bg-gray-900 flex">
       <div className="w-80 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
         <h1 className="text-2xl font-bold text-white mb-4">🏛️ Debate Arena</h1>
+
+        <div className="bg-gray-700 rounded-lg p-3 mb-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Arguments:</span>
+            <span className="text-white font-semibold">
+              {Object.keys(storeArgs).length}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Relations:</span>
+            <span className="text-white font-semibold">
+              {Object.keys(storeRels).length}
+            </span>
+          </div>
+        </div>
 
         <div className="bg-gray-700 rounded-lg p-4 mb-4">
           <h2 className="text-white font-semibold mb-3">Add Argument</h2>
@@ -119,6 +140,7 @@ export default function DebateArena() {
           <textarea
             value={newArgContent}
             onChange={(e) => setNewArgContent(e.target.value)}
+            onKeyDown={handleKeyPress}
             placeholder="Enter your argument..."
             className="w-full bg-gray-600 text-white rounded px-3 py-2 mb-2 resize-none"
             rows={3}
@@ -136,7 +158,8 @@ export default function DebateArena() {
         <div className="bg-gray-700 rounded-lg p-4 mb-4">
           <h2 className="text-white font-semibold mb-3">Connection Mode</h2>
           <p className="text-gray-400 text-xs mb-2">
-            Drag from a node&apos;s bottom handle to another node&apos;s top handle
+            Drag from a node&apos;s bottom handle to another node&apos;s top
+            handle
           </p>
 
           <div className="space-y-2">
@@ -168,6 +191,15 @@ export default function DebateArena() {
             <li>• Vote with 👍 👎 buttons</li>
             <li>• Delete with ✕ button</li>
           </ul>
+          <div className="mt-3 pt-3 border-t border-gray-600">
+            <p className="text-xs text-gray-400 italic">
+              <strong>Keyboard shortcuts:</strong>
+              <br />
+              Ctrl+Enter: Save edit or add argument
+              <br />
+              Esc: Cancel edit
+            </p>
+          </div>
         </div>
       </div>
 
