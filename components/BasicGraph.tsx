@@ -99,7 +99,7 @@ const initialEdges: Edge[] = [
   },
 ];
 
-export default function DebateArena() {
+export default function BasicGraph() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
