@@ -1,5 +1,3 @@
-"use client";
-
 import { Handle, Position } from "reactflow";
 import { useDebateStore } from "@/lib/store";
 import { ArgumentType } from "@/lib/types";
