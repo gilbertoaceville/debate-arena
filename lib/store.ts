@@ -71,40 +71,26 @@ export const useDebateStore = create<DebateState>()(
         const argument = useDebateStore.getState().arguments[id];
         if (!argument) return;
 
-        //call claude api
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1000,
-            messages: [
-              {
-                role: "user",
-                content: `Analyze this ${argument.type} for logical fallacies and argument strength:
-
-"${argument.content}"
-
-Provide your analysis in this exact JSON format (no markdown, just raw JSON):
-{
-  "fallacies": ["fallacy name 1", "fallacy name 2"],
-  "strength": 75,
-  "feedback": "Brief explanation of strengths and weaknesses"
-}
-
-If no fallacies found, use empty array. Strength is 0-100 where 100 is strongest.`,
-              },
-            ],
-          }),
+            argumentType: argument.type,
+            content: argument.content
+          })
         });
 
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error('Failed to analyze argument');
+        }
 
-        let analysisText = "";
+        const data = await response.json();
+        
+        let analysisText = '';
         for (const block of data.content) {
-          if (block.type === "text") {
+          if (block.type === 'text') {
             analysisText += block.text;
           }
         }
@@ -113,24 +99,32 @@ If no fallacies found, use empty array. Strength is 0-100 where 100 is strongest
         const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const analysis = JSON.parse(jsonMatch[0]);
-
+          
           set((state) => {
             if (state.arguments[id]) {
               state.arguments[id].aiAnalysis = {
                 fallacies: analysis.fallacies || [],
                 strength: analysis.strength || 50,
-                feedback: analysis.feedback || "No feedback provided",
-                analyzedAt: Date.now(),
+                feedback: analysis.feedback || 'No feedback provided',
+                analyzedAt: Date.now()
               };
               state.arguments[id].isAnalyzing = false;
             }
           });
+        } else {
+          throw new Error('Could not parse analysis response');
         }
       } catch (error) {
-        console.error("Analysis error:", error);
+        console.error('Analysis error:', error);
         set((state) => {
           if (state.arguments[id]) {
             state.arguments[id].isAnalyzing = false;
+            state.arguments[id].aiAnalysis = {
+              fallacies: [],
+              strength: 0,
+              feedback: 'Analysis failed. Please try again.',
+              analyzedAt: Date.now()
+            };
           }
         });
       }
