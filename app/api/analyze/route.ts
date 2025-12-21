@@ -10,29 +10,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ useMock: true });
     }
 
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          inputs: `Analyze this ${argumentType} for logical fallacies and argument strength. Respond ONLY with valid JSON in this exact format:
+    const response = await fetch(process.env.HUGGINGFACE_URL || "", {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        inputs: `Analyze this ${argumentType} for logical fallacies and argument strength. Respond ONLY with valid JSON in this exact format:
 {"fallacies": ["fallacy1", "fallacy2"], "strength": 75, "feedback": "explanation"}
 
 Argument to analyze: "${content}"
 
 JSON response:`,
-          parameters: {
-            max_new_tokens: 250,
-            temperature: 0.7,
-            return_full_text: false,
-          },
-        }),
-      }
-    );
+        parameters: {
+          max_new_tokens: 250,
+          temperature: 0.7,
+          return_full_text: false,
+        },
+      }),
+    });
 
     if (!response.ok) {
       console.error("HuggingFace API error:", response.status);
