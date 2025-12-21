@@ -4,52 +4,58 @@ export async function POST(request: NextRequest) {
   try {
     const { argumentType, content } = await request.json();
 
-    const response = await fetch(`${process.env.ANTHROPIC_URL}/v1/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [
-          {
-            role: "user",
-            content: `Analyze this ${argumentType} for logical fallacies and argument strength:
+    const apiKey = process.env.HUGGINGFACE_API_KEY;
 
-"${content}"
+    if (!apiKey) {
+      return NextResponse.json({ useMock: true });
+    }
 
-Provide your analysis in this exact JSON format (no markdown, just raw JSON):
-{
-  "fallacies": ["fallacy name 1", "fallacy name 2"],
-  "strength": 75,
-  "feedback": "Brief explanation of strengths and weaknesses"
-}
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          inputs: `Analyze this ${argumentType} for logical fallacies and argument strength. Respond ONLY with valid JSON in this exact format:
+{"fallacies": ["fallacy1", "fallacy2"], "strength": 75, "feedback": "explanation"}
 
-If no fallacies found, use empty array. Strength is 0-100 where 100 is strongest.`,
+Argument to analyze: "${content}"
+
+JSON response:`,
+          parameters: {
+            max_new_tokens: 250,
+            temperature: 0.7,
+            return_full_text: false,
           },
-        ],
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Anthropic API error:", errorData);
-      return NextResponse.json(
-        { error: "Failed to analyze argument" },
-        { status: response.status }
-      );
+      console.error("HuggingFace API error:", response.status);
+      return NextResponse.json({ useMock: true });
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    const generatedText = data[0]?.generated_text || "";
+
+    const jsonMatch = generatedText.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const analysis = JSON.parse(jsonMatch[0]);
+      return NextResponse.json({
+        fallacies: analysis.fallacies || [],
+        strength: analysis.strength || 50,
+        feedback: analysis.feedback || "Analysis completed",
+      });
+    }
+
+    return NextResponse.json({ useMock: true });
   } catch (error) {
     console.error("Analysis error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ useMock: true });
   }
 }
