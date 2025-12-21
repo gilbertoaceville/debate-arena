@@ -5,12 +5,13 @@ export async function POST(request: NextRequest) {
     const { argumentType, content } = await request.json();
 
     const apiKey = process.env.HUGGINGFACE_API_KEY;
+    const url = process.env.HUGGINGFACE_URL || "";
 
     if (!apiKey) {
       return NextResponse.json({ useMock: true });
     }
 
-    const response = await fetch(process.env.HUGGINGFACE_URL || "", {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",

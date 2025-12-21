@@ -62,26 +62,73 @@ export const useDebateStore = create<DebateState>()(
         });
       }),
     analyzeArgument: async (id) => {
+      // Set analyzing state
       set((state) => {
         if (state.arguments[id]) {
           state.arguments[id].isAnalyzing = true;
         }
       });
 
-      const argument = useDebateStore.getState().arguments[id];
+      try {
+        const argument = useDebateStore.getState().arguments[id];
+        if (!argument) return;
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            argumentType: argument.type,
+            content: argument.content
+          })
+        });
 
-      const analysis = mockAnalyzeArgument(argument.content, argument.type);
+        if (!response.ok) {
+          throw new Error('Failed to analyze argument');
+        }
 
-      set((state) => {
-        state.arguments[id].aiAnalysis = {
-          fallacies: analysis.fallacies,
-          strength: analysis.strength,
-          feedback: analysis.feedback,
-          analyzedAt: Date.now(),
-        };
-      });
+        const data = await response.json();
+        
+        let analysisText = '';
+        for (const block of data.content) {
+          if (block.type === 'text') {
+            analysisText += block.text;
+          }
+        }
+
+        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0]);
+          
+          set((state) => {
+            if (state.arguments[id]) {
+              state.arguments[id].aiAnalysis = {
+                fallacies: analysis.fallacies || [],
+                strength: analysis.strength || 50,
+                feedback: analysis.feedback || 'No feedback provided',
+                analyzedAt: Date.now()
+              };
+              state.arguments[id].isAnalyzing = false;
+            }
+          });
+        } else {
+          throw new Error('Could not parse analysis response');
+        }
+      } catch (error) {
+        console.error('Analysis error:', error);
+        set((state) => {
+          if (state.arguments[id]) {
+            state.arguments[id].isAnalyzing = false;
+            state.arguments[id].aiAnalysis = {
+              fallacies: [],
+              strength: 0,
+              feedback: 'Analysis failed. Please try again.',
+              analyzedAt: Date.now()
+            };
+          }
+        });
+      }
     },
   }))
 );

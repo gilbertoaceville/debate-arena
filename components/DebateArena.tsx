@@ -204,8 +204,10 @@ export default function DebateArena() {
             <p className="text-xs text-purple-300 italic">
               <strong>🤖 AI Analysis:</strong>
               <br />
-              Claude analyzes arguments for logical fallacies and provides a
-              strength score (0-100).
+              Uses HuggingFace AI when available, falls back to mock analysis.
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              Check console to see which mode is active.
             </p>
           </div>
         </div>
